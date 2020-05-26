@@ -41,6 +41,7 @@
 #include "channel.hpp"
 #include "config_utils.hpp"
 #include "globals.hpp"
+//#include "power_module.hpp"
 
 typedef Channel<Credit> CreditChannel;
 
@@ -63,7 +64,22 @@ protected:
 
   vector<FlitChannel *> _chan;
   vector<CreditChannel *> _chan_cred;
+/*
+  vector<FlitChannel *> _chan2;
+  vector<CreditChannel *> _chan2_cred;
 
+  vector<FlitChannel *> _chan3;
+  vector<CreditChannel *> _chan3_cred;
+  
+  vector<FlitChannel *> _chan4;
+  vector<CreditChannel *> _chan4_cred;
+  
+  vector<FlitChannel *> _chan5;
+  vector<CreditChannel *> _chan5_cred;
+  
+  vector<FlitChannel *> _chan6;
+  vector<CreditChannel *> _chan6_cred;
+  */
   deque<TimedModule *> _timed_modules;
 
   virtual void _ComputeSize( const Configuration &config ) = 0;

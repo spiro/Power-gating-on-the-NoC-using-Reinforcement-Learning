@@ -54,6 +54,9 @@ int const Router::STALL_BUFFER_CONFLICT = -3;
 int const Router::STALL_BUFFER_FULL = -4;
 int const Router::STALL_BUFFER_RESERVED = -5;
 int const Router::STALL_CROSSBAR_CONFLICT = -6;
+//#define ACTION_NUM 6;
+
+
 
 Router::Router( const Configuration& config,
 		Module *parent, const string & name, int id,
@@ -69,7 +72,19 @@ TimedModule( parent, name ), _id( id ), _inputs( inputs ), _outputs( outputs ),
   _internal_speedup = config.GetFloat( "internal_speedup" );
   _classes          = config.GetInt( "classes" );
 
+  //Added
+  action[0]=0;
+  action[1]=0;
+  action[2]=0;
+  action[3]=0;
+  prev_flits=0;
+  possible_action_num=3;
+  throughput=0;
+  prev_throughput=0;
+  buff=0;
+  
 #ifdef TRACK_FLOWS
+  // cout << "###############################HELLO$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
   _received_flits.resize(_classes, vector<int>(_inputs, 0));
   _stored_flits.resize(_classes);
   _sent_flits.resize(_classes, vector<int>(_outputs, 0));
@@ -96,10 +111,13 @@ void Router::AddInputChannel( FlitChannel *channel, CreditChannel *backchannel )
 
 void Router::AddOutputChannel( FlitChannel *channel, CreditChannel *backchannel )
 {
+//  cout << "here" << endl;
   _output_channels.push_back( channel );
   _output_credits.push_back( backchannel );
+  
   _channel_faults.push_back( false );
   channel->SetSource( this, _output_channels.size() - 1 ) ;
+//  cout << "added" << endl;
 }
 
 void Router::Evaluate( )
@@ -149,7 +167,92 @@ Router *Router::NewRouter( const Configuration& config,
   return r;
 }
 
+// void Router::get_possible_action(double R[100][100], int state, int possible_action[10]){
+//     // find R[i][j] value > 0 is action we can do later
+//     possible_action_num = 0;
+//     if(x<row-1)
+//     {
+//         possible_action[possible_action_num] = 0;
+//         possible_action_num++;
+//     }
+//     if(x>0)
+//     {
+//         possible_action[possible_action_num] = 1;
+//         possible_action_num++;
+//     }
+//     if(y<col-1)
+//     {
+//         possible_action[possible_action_num] = 2;
+//         possible_action_num++;
+//     }
+//     if(y>0)
+//     {
+//         possible_action[possible_action_num] = 3;
+//         possible_action_num++;
+//     }
+// }
 
+double Router::get_max_q(double Q[6][3], int state){
+    double temp_max = 0;
+    for(int i=0;i<3;i++)
+    {
+      if(Q[state][i]>temp_max)
+      {
+          temp_max = Q[state][i];
+      }  
+    }
+    return temp_max;
+}
 
+int Router::inference_best_action(int now_state, double Q[6][3]){
+    // get the max value of Q corresponding action when state is nw_state
+    double temp_max_q=0;
+    int best_action=0;
+    for (int i = 0; i < 3; ++i) {
+        if (Q[now_state][i] > temp_max_q){
+            temp_max_q = Q[now_state][i];
+            best_action = i;
+        }
+    }
+    return best_action;
+}
 
+int Router::step_iterator(int init_state,double reward)
+{   
+    double Q_before;//, Q_after;
+    // next action
+    int next_action=0;
+    double max_q;
+    srand( (unsigned)time( NULL ) );
+    int r_max=2147483647;
+    float random_val=rand();
+    random_val=random_val/r_max;
+    float alpha=0.1;
+    float gamma=0.8;
+    float epsilon=0.2;
+ //   memset(possible_action, 0, 3*sizeof(int));
+    //get_possible_action(R, init_state, possible_action);
+    possible_action[0]=0;
+    possible_action[1]=1;
+    possible_action[2]=2;
+    // get next action
+    if(random_val>epsilon)
+    {
+     next_action = possible_action[rand()%possible_action_num];
+    }
+    else
+    {
+      next_action= inference_best_action(init_state,q_table);
+    }
+    max_q = get_max_q(q_table, next_action);
+    Q_before = q_table[init_state][next_action];
+    // update formula Q(s,a)=Q(s,a)+learning rate *(R(s,a)+ gamma * max{Q(s', a')}-Q(s,a))
+    q_table[init_state][next_action] = Q_before + alpha *(reward+gamma*max_q-Q_before);
+    // Q_after = Q[init_state][next_action];
+    action[0]=next_action;
+    action[1]=next_action;
+    action[2]=next_action;
+    action[3]=next_action;
+    return next_action;
+}
 

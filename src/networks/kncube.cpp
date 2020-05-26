@@ -59,9 +59,9 @@ void KNCube::_ComputeSize( const Configuration &config )
 
   gK = _k; gN = _n;
   _size     = powi( _k, _n );
-  _channels = 2*_n*_size;
-
+  _channels = 3*2*_n*_size;
   _nodes = _size;
+ // cout << "channels ::::::::::::::::::::" << _channels << endl;
 }
 
 void KNCube::RegisterRoutingFunctions() {
@@ -83,11 +83,11 @@ void KNCube::_BuildNet( const Configuration &config )
   //latency type, noc or conventional network
   bool use_noc_latency;
   use_noc_latency = (config.GetInt("use_noc_latency")==1);
-  
+  cout << _chan.size() << endl;
   for ( int node = 0; node < _size; ++node ) {
 
     router_name << "router";
-    
+
     if ( _k > 1 ) {
       for ( int dim_offset = _size / _k; dim_offset >= 1; dim_offset /= _k ) {
 	router_name << "_" << ( node / dim_offset ) % _k;
@@ -95,7 +95,7 @@ void KNCube::_BuildNet( const Configuration &config )
     }
 
     _routers[node] = Router::NewRouter( config, this, router_name.str( ), 
-					node, 2*_n + 1, 2*_n + 1 );
+					node, 3*2*_n + 1, 3*2*_n + 1 );
     _timed_modules.push_back(_routers[node]);
 
     router_name.str("");
@@ -126,6 +126,7 @@ void KNCube::_BuildNet( const Configuration &config )
       _routers[node]->AddInputChannel( _chan[right_input], _chan_cred[right_input] );
       _routers[node]->AddInputChannel( _chan[left_input], _chan_cred[left_input] );
 
+
       //set input channel latency
       if(use_noc_latency){
 	_chan[right_input]->SetLatency( latency );
@@ -138,6 +139,9 @@ void KNCube::_BuildNet( const Configuration &config )
 	_chan_cred[left_input]->SetLatency( 1 );
 	_chan[right_input]->SetLatency( 1 );
       }
+      //cout << left_input << " " << left_input+2*_n*_size << " " << left_input+4*_n*_size << endl;
+
+  
       //get the output channel number
       right_output = _RightChannel( node, dim );
       left_output  = _LeftChannel( node, dim );
@@ -145,6 +149,7 @@ void KNCube::_BuildNet( const Configuration &config )
       //add the output channel
       _routers[node]->AddOutputChannel( _chan[right_output], _chan_cred[right_output] );
       _routers[node]->AddOutputChannel( _chan[left_output], _chan_cred[left_output] );
+     // cout << left_output << " " << right_output << " " << node << endl;
 
       //set output channel latency
       if(use_noc_latency){
@@ -159,13 +164,171 @@ void KNCube::_BuildNet( const Configuration &config )
 	_chan_cred[left_output]->SetLatency( 1 );
 
       }
-    }
+    
+
+    //added 
+  
+
+    
+    //till here
     //injection and ejection channel, always 1 latency
+    }
     _routers[node]->AddInputChannel( _inject[node], _inject_cred[node] );
     _routers[node]->AddOutputChannel( _eject[node], _eject_cred[node] );
     _inject[node]->SetLatency( 1 );
     _eject[node]->SetLatency( 1 );
+
+    for ( int dim = 0; dim < _n; ++dim ) {
+
+      //find the neighbor 
+      left_node  = _LeftNode( node, dim );
+      right_node = _RightNode( node, dim );
+
+      //
+      // Current (N)ode
+      // (L)eft node
+      // (R)ight node
+      //
+      //   L--->N<---R
+      //   L<---N--->R
+      //
+
+      // torus channel is longer due to wrap around
+      int latency = _mesh ? 1 : 2 ;
+
+      //get the input channel number
+      right_input = _LeftChannel( right_node, dim );
+      left_input  = _RightChannel( left_node, dim );
+
+      //add the input channel
+ //added
+
+      _routers[node]->AddInputChannel( _chan[right_input+2*_n*_size], _chan_cred[right_input+2*_n*_size] );
+      _routers[node]->AddInputChannel( _chan[left_input+2*_n*_size], _chan_cred[left_input+2*_n*_size] );
+ 
+//till here
+      //set input channel latency
+      //added
+      
+      if(use_noc_latency){
+  _chan[right_input+2*_n*_size]->SetLatency( latency );
+  _chan[left_input+2*_n*_size]->SetLatency( latency );
+  _chan_cred[right_input+2*_n*_size]->SetLatency( latency );
+  _chan_cred[left_input+2*_n*_size]->SetLatency( latency );
+      } else {
+  _chan[left_input+2*_n*_size]->SetLatency( 1 );
+  _chan_cred[right_input+2*_n*_size]->SetLatency( 1 );
+  _chan_cred[left_input+2*_n*_size]->SetLatency( 1 );
+  _chan[right_input+2*_n*_size]->SetLatency( 1 );
+      }
+
+      //till here
+
+      //get the output channel number
+      right_output = _RightChannel( node, dim );
+      left_output  = _LeftChannel( node, dim );
+      
+      //add the output channel
+
+//added
+      _routers[node]->AddOutputChannel( _chan[right_output+2*_n*_size], _chan_cred[right_output+2*_n*_size] );
+      _routers[node]->AddOutputChannel( _chan[left_output+2*_n*_size], _chan_cred[left_output+2*_n*_size] );
+
+
+      //set output channel latency
+    
+
+    //added 
+    
+    if(use_noc_latency){
+  _chan[right_output+2*_n*_size]->SetLatency( latency );
+  _chan[left_output+2*_n*_size]->SetLatency( latency );
+  _chan_cred[right_output+2*_n*_size]->SetLatency( latency );
+  _chan_cred[left_output+2*_n*_size]->SetLatency( latency );
+      } else {
+  _chan[right_output+2*_n*_size]->SetLatency( 1 );
+  _chan[left_output+2*_n*_size]->SetLatency( 1 );
+  _chan_cred[right_output+2*_n*_size]->SetLatency( 1 );
+  _chan_cred[left_output+2*_n*_size]->SetLatency( 1 );
+
+      }
+    
+    //injection and ejection channel, always 1 latency
+    }
+
+    for ( int dim = 0; dim < _n; ++dim ) {
+
+      //find the neighbor 
+      left_node  = _LeftNode( node, dim );
+      right_node = _RightNode( node, dim );
+
+      //
+      // Current (N)ode
+      // (L)eft node
+      // (R)ight node
+      //
+      //   L--->N<---R
+      //   L<---N--->R
+      //
+
+      // torus channel is longer due to wrap around
+      int latency = _mesh ? 1 : 2 ;
+
+      //get the input channel number
+      right_input = _LeftChannel( right_node, dim );
+      left_input  = _RightChannel( left_node, dim );
+
+      //add the input channel
+      _routers[node]->AddInputChannel( _chan[right_input+4*_n*_size], _chan_cred[right_input+4*_n*_size] );
+      _routers[node]->AddInputChannel( _chan[left_input+4*_n*_size], _chan_cred[left_input+4*_n*_size] );
+
+//till here
+      //set input channel latency
+      
+
+      if(use_noc_latency){
+  _chan[right_input+4*_n*_size]->SetLatency( latency );
+  _chan[left_input+4*_n*_size]->SetLatency( latency );
+  _chan_cred[right_input+4*_n*_size]->SetLatency( latency );
+  _chan_cred[left_input+4*_n*_size]->SetLatency( latency );
+      } else {
+  _chan[left_input+4*_n*_size]->SetLatency( 1 );
+  _chan_cred[right_input+4*_n*_size]->SetLatency( 1 );
+  _chan_cred[left_input+4*_n*_size]->SetLatency( 1 );
+  _chan[right_input+4*_n*_size]->SetLatency( 1 );
+      }
+      //till here
+
+      //get the output channel number
+      right_output = _RightChannel( node, dim );
+      left_output  = _LeftChannel( node, dim );
+      
+     _routers[node]->AddOutputChannel( _chan[left_output+4*_n*_size], _chan_cred[left_output+4*_n*_size] );
+      _routers[node]->AddOutputChannel( _chan[right_output+4*_n*_size], _chan_cred[right_output+4*_n*_size] );
+//till here
+
+
+      //set output channel latency
+     
+
+    if(use_noc_latency){
+  _chan[right_output+4*_n*_size]->SetLatency( latency );
+  _chan[left_output+4*_n*_size]->SetLatency( latency );
+  _chan_cred[right_output+4*_n*_size]->SetLatency( latency );
+  _chan_cred[left_output+4*_n*_size]->SetLatency( latency );
+      } else {
+  _chan[right_output+4*_n*_size]->SetLatency( 1 );
+  _chan[left_output+4*_n*_size]->SetLatency( 1 );
+  _chan_cred[right_output+4*_n*_size]->SetLatency( 1 );
+  _chan_cred[left_output+4*_n*_size]->SetLatency( 1 );
+
+      }
+    //till here
+    //injection and ejection channel, always 1 latency
+    }
   }
+
+  cout  << "*******************Network Build complete*********************" << endl;
 }
 
 int KNCube::_LeftChannel( int node, int dim )

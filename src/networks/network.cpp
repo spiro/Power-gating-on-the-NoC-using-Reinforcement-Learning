@@ -167,6 +167,7 @@ void Network::_Alloc( )
   }
   _chan.resize(_channels);
   _chan_cred.resize(_channels);
+//  cout << _channels << " FFFFFFFFFFFFFFFFFFFFF" << endl;
   for ( int c = 0; c < _channels; ++c ) {
     ostringstream name;
     name << Name() << "_fchan_" << c;
@@ -177,6 +178,76 @@ void Network::_Alloc( )
     _chan_cred[c] = new CreditChannel(this, name.str());
     _timed_modules.push_back(_chan_cred[c]);
   }
+ // cout << _timed_modules.size() << "DDDDDDDDDDDDDDDDDDDDDD" << endl;
+  // Added
+/*
+  _chan2.resize(_channels);
+  _chan2_cred.resize(_channels);
+  for ( int c = 0; c < _channels; ++c ) {
+    ostringstream name;
+    name << Name() << "_fchan_" << c;
+    _chan2[c] = new FlitChannel(this, name.str(), _classes);
+    _timed_modules.push_back(_chan2[c]);
+    name.str("");
+    name << Name() << "_cchan_" << c;
+    _chan2_cred[c] = new CreditChannel(this, name.str());
+    _timed_modules.push_back(_chan2_cred[c]);
+  }
+
+  _chan3.resize(_channels);
+  _chan3_cred.resize(_channels);
+  for ( int c = 0; c < _channels; ++c ) {
+    ostringstream name;
+    name << Name() << "_fchan_" << c;
+    _chan3[c] = new FlitChannel(this, name.str(), _classes);
+    _timed_modules.push_back(_chan3[c]);
+    name.str("");
+    name << Name() << "_cchan_" << c;
+    _chan3_cred[c] = new CreditChannel(this, name.str());
+    _timed_modules.push_back(_chan3_cred[c]);
+  }
+
+  _chan4.resize(_channels);
+  _chan4_cred.resize(_channels);
+  for ( int c = 0; c < _channels; ++c ) {
+    ostringstream name;
+    name << Name() << "_fchan_" << c;
+    _chan4[c] = new FlitChannel(this, name.str(), _classes);
+    _timed_modules.push_back(_chan4[c]);
+    name.str("");
+    name << Name() << "_cchan_" << c;
+    _chan4_cred[c] = new CreditChannel(this, name.str());
+    _timed_modules.push_back(_chan4_cred[c]);
+  }
+
+  _chan5.resize(_channels);
+  _chan5_cred.resize(_channels);
+  for ( int c = 0; c < _channels; ++c ) {
+    ostringstream name;
+    name << Name() << "_fchan_" << c;
+    _chan5[c] = new FlitChannel(this, name.str(), _classes);
+    _timed_modules.push_back(_chan5[c]);
+    name.str("");
+    name << Name() << "_cchan_" << c;
+    _chan5_cred[c] = new CreditChannel(this, name.str());
+    _timed_modules.push_back(_chan5_cred[c]);
+  }
+
+
+  _chan6.resize(_channels);
+  _chan6_cred.resize(_channels);
+  for ( int c = 0; c < _channels; ++c ) {
+    ostringstream name;
+    name << Name() << "_fchan_" << c;
+    _chan5[c] = new FlitChannel(this, name.str(), _classes);
+    _timed_modules.push_back(_chan5[c]);
+    name.str("");
+    name << Name() << "_cchan_" << c;
+    _chan6_cred[c] = new CreditChannel(this, name.str());
+    _timed_modules.push_back(_chan6_cred[c]);
+  }
+*/
+  //till here
 }
 
 void Network::ReadInputs( )

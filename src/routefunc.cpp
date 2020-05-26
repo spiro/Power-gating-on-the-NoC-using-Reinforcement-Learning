@@ -539,10 +539,11 @@ void xy_yx_mesh( const Router *r, const Flit *f,
 
 int dor_next_mesh( int cur, int dest, bool descending )
 {
+  //cout << cur << " " << dest << " ";
   if ( cur == dest ) {
+    //cout <<2 *gN << "********" << endl;
     return 2*gN;  // Eject
   }
-
   int dim_left;
 
   if(descending) {
@@ -562,8 +563,10 @@ int dor_next_mesh( int cur, int dest, bool descending )
   }
 
   if ( cur < dest ) {
+    //cout << 2*dim_left << endl;
     return 2*dim_left;     // Right
   } else {
+    //cout << 2*dim_left+1 << endl;
     return 2*dim_left + 1; // Left
   }
 }
@@ -643,7 +646,7 @@ void dor_next_torus( int cur, int dest, int in_port,
 void dim_order_mesh( const Router *r, const Flit *f, int in_channel, OutputSet *outputs, bool inject )
 {
   int out_port = inject ? -1 : dor_next_mesh( r->GetID( ), f->dest );
-  
+  //cout  << r->GetID() << " " <<  f->dest << " " << out_port << endl;
   int vcBegin = 0, vcEnd = gNumVCs-1;
   if ( f->type == Flit::READ_REQUEST ) {
     vcBegin = gReadReqBeginVC;
@@ -660,6 +663,28 @@ void dim_order_mesh( const Router *r, const Flit *f, int in_channel, OutputSet *
   }
   assert(((f->vc >= vcBegin) && (f->vc <= vcEnd)) || (inject && (f->vc < 0)));
 
+  if(out_port<4&&out_port>=0)
+  {
+  
+//    r->throughput[out_port]++;
+
+    int open=r->action[out_port];
+    //cout << open << "%%%%%%%%%%%%%%%%%%" << endl;
+    int active_links=open%3+1;
+    int out_link_no=rand()%active_links;
+  
+
+
+    if(out_link_no==1)
+    {
+      out_port=out_port+5;
+    }
+    else if(out_link_no==2)
+    {
+      out_port=out_port+9;
+    }
+  }
+
   if ( !inject && f->watch ) {
     *gWatchOut << GetSimTime() << " | " << r->FullName() << " | "
 	       << "Adding VC range [" 
@@ -671,7 +696,7 @@ void dim_order_mesh( const Router *r, const Flit *f, int in_channel, OutputSet *
 	       << ", destination " << f->dest << ")"
 	       << "." << endl;
   }
-  
+//  cout << out_port << " #" << endl;
   outputs->Clear();
 
   outputs->AddRange( out_port, vcBegin, vcEnd );
