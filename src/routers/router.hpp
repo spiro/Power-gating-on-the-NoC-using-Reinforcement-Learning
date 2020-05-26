@@ -30,7 +30,7 @@
 
 #include <string>
 #include <vector>
-
+#include <bits/stdc++.h>
 #include "timed_module.hpp"
 #include "flit.hpp"
 #include "credit.hpp"
@@ -39,6 +39,7 @@
 #include "config_utils.hpp"
 
 typedef Channel<Credit> CreditChannel;
+
 
 class Router : public TimedModule {
 
@@ -49,6 +50,11 @@ protected:
   static int const STALL_BUFFER_FULL;
   static int const STALL_BUFFER_RESERVED;
   static int const STALL_CROSSBAR_CONFLICT;
+
+  int possible_action_num;
+  int possible_action[3];
+//  int ACTION_NUM=6;
+
 
   int _id;
   
@@ -65,12 +71,16 @@ protected:
 
   int _crossbar_delay;
   int _credit_delay;
-  
   vector<FlitChannel *>   _input_channels;
   vector<CreditChannel *> _input_credits;
   vector<FlitChannel *>   _output_channels;
   vector<CreditChannel *> _output_credits;
   vector<bool>            _channel_faults;
+
+//added for RL
+  double q_table[9][3];
+
+
 
 #ifdef TRACK_FLOWS
   vector<vector<int> > _received_flits;
@@ -87,7 +97,6 @@ protected:
   vector<int> _buffer_reserved_stalls;
   vector<int> _crossbar_conflict_stalls;
 #endif
-
   virtual void _InternalStep() = 0;
 
 public:
@@ -111,9 +120,33 @@ public:
     return _output_channels[output];
   }
 
+
+  int throughput;
+  int prev_throughput;
+  int action[4];
+  int prev_flits;
+  int buff;
+  
+// #ifdef TRACK_FLOWS
+//   vector<vector<int> > _received_flits;
+//   vector<vector<int> > _stored_flits;
+//   vector<vector<int> > _sent_flits;
+//   vector<vector<int> > _outstanding_credits;
+//   vector<vector<int> > _active_packets;
+// #endif
+
+
   virtual void ReadInputs( ) = 0;
   virtual void Evaluate( );
   virtual void WriteOutputs( ) = 0;
+
+
+
+  int inference_best_action(int now_state, double Q[6][3]);
+//  void get_possible_action(double R[100][100], int state, int possible_action[10]);
+  double get_max_q(double Q[6][3], int state);
+  int step_iterator(int init_state,double reward);
+
 
   void OutChannelFault( int c, bool fault = true );
   bool IsFaultyOutput( int c ) const;

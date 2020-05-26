@@ -953,6 +953,8 @@ void TrafficManager::_Inject(){
 
 void TrafficManager::_Step( )
 {
+//    cout << "Hi" << endl;
+   // cout << val++ << endl;
     bool flits_in_flight = false;
     for(int c = 0; c < _classes; ++c) {
         flits_in_flight |= !_total_in_flight_flits[c].empty();
@@ -977,6 +979,7 @@ void TrafficManager::_Step( )
                                << "." << endl;
                 }
                 flits[subnet].insert(make_pair(n, f));
+                 
                 if((_sim_state == warming_up) || (_sim_state == running)) {
                     ++_accepted_flits[f->cl][n];
                     if(f->tail) {
@@ -1201,7 +1204,6 @@ void TrafficManager::_Step( )
                     f->pri = numeric_limits<int>::max() - _time;
                     assert(f->pri >= 0);
                 }
-	
                 if(f->watch) {
                     *gWatchOut << GetSimTime() << " | "
                                << "node" << n << " | "
@@ -1211,6 +1213,8 @@ void TrafficManager::_Step( )
                                << " with priority " << f->pri
                                << "." << endl;
                 }
+
+    	       
                 f->itime = _time;
 
                 // Pass VC "back"
@@ -1229,7 +1233,7 @@ void TrafficManager::_Step( )
 #ifdef TRACK_FLOWS
                 ++_injected_flits[c][n];
 #endif
-	
+	           _router[subnet][n]->buff++;
                 _net[subnet]->WriteFlit(f, n);
 	
             }
@@ -1257,7 +1261,7 @@ void TrafficManager::_Step( )
 #ifdef TRACK_FLOWS
                 ++_ejected_flits[f->cl][n];
 #endif
-	
+	           _router[subnet][n]->buff--;
                 _RetireFlit(f, n);
             }
         }
@@ -1414,10 +1418,34 @@ void TrafficManager::_DisplayRemaining( ostream & os ) const
     }
 }
 
+int get_state(int a,int b)
+{
+    int va=0;
+    if(a>10&&a<=20)
+    {
+        va=1;
+    }
+    else if(a>20)
+    {
+        va=2;
+    }
+    int vb=0;
+    if(b>=40&&b<100)
+    {
+        vb=1;
+    }
+    else if(b>=100)
+    {
+        vb=2;
+    }
+    return va*3+vb;
+}
+
+
 bool TrafficManager::_SingleSim( )
 {
     int converged = 0;
-  
+    //cout << _routers << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
     //once warmed up, we require 3 converging runs to end the simulation 
     vector<double> prev_latency(_classes, 0.0);
     vector<double> prev_accepted(_classes, 0.0);
@@ -1431,16 +1459,45 @@ bool TrafficManager::_SingleSim( )
             clear_last = false;
             _ClearStats( );
         }
-    
-    
+        // int prev_time=_time;
+        // int cur_time;
+    //    cout << _sample_period << "(((((((())))))))))" << endl;
         for ( int iter = 0; iter < _sample_period; ++iter )
+        {
+            //cout << _time << endl;
+            if(iter%10==0&&iter>0)
+            {
+               // cur_time=_time;
+               // int gap=cur_time-prev_time;
+               double cur_latency = _plat_stats[0]->Average( );
+               // cout << cur_latency << endl;
+
+                for(int ii=0;ii<_subnets;ii++)
+                {
+                    for(int jj=0;jj<_routers;jj++)
+                    {
+                       // cout <<  << " ";
+                        int bf=_router[ii][jj]->buff;
+                        int th=(_sent_flits[ii][jj]-_router[ii][jj]->prev_flits);
+                        _router[ii][jj]->prev_flits=_sent_flits[ii][jj];
+                      //  cout << th << endl;
+                        int st=get_state(th,bf);
+                        // double packet_power=1;
+                        double link_power=1;
+                        double power=(_router[ii][jj]->action[0]*link_power);
+                        double reward=1/(cur_latency*power);
+                       _router[ii][jj]->step_iterator(st,reward);
+                       // cout << prev_accepted[0] << endl;
+                    }
+                }
+            }
+       //cout << iter << " " ;
             _Step( );
-    
-        //cout << _sim_state << endl;
+        }
+      //  cout << _sim_state << endl;
 
         UpdateStats();
         DisplayStats();
-    
         int lat_exc_class = -1;
         int lat_chg_exc_class = -1;
         int acc_chg_exc_class = -1;
@@ -1463,7 +1520,7 @@ bool TrafficManager::_SingleSim( )
 
             double accepted_change = fabs((cur_accepted - prev_accepted[c]) / cur_accepted);
             prev_accepted[c] = cur_accepted;
-
+           // cout << cur_latency << " " << cur_accepted << endl;
             double latency = (double)_plat_stats[c]->Sum();
             double count = (double)_plat_stats[c]->NumSamples();
       
@@ -1613,7 +1670,7 @@ bool TrafficManager::Run( )
     for ( int sim = 0; sim < _total_sims; ++sim ) {
 
         _time = 0;
-
+        //val=0;
         //remove any pending request from the previous simulations
         _requestsOutstanding.assign(_nodes, 0);
         for (int i=0;i<_nodes;i++) {
@@ -1636,7 +1693,7 @@ bool TrafficManager::Run( )
         _sim_state    = warming_up;
   
         _ClearStats( );
-
+        //cout << "hell" << endl;
         for(int c = 0; c < _classes; ++c) {
             _traffic_pattern[c]->reset();
             _injection_process[c]->reset();

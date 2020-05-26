@@ -51,3 +51,12 @@ public:
 };
 
 #endif
+
+
+// #define TRACK_FLOWS 1
+// #define TRACK_STALLS 1
+
+
+// #ifndef TRACK_FLOWS
+// #define TRACK_FLOWS
+// #endif

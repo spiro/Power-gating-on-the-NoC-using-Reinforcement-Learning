@@ -34,7 +34,7 @@
  */
 
 #include <cassert>
-
+#include <iostream>
 #include "booksim.hpp"
 #include "outputset.hpp"
 
@@ -52,7 +52,7 @@ void OutputSet::AddRange( int output_port, int vc_start, int vc_end, int pri )
 {
 
   sSetElement s;
-
+//  std::cout << output_port << std::endl;
   s.vc_start = vc_start;
   s.vc_end   = vc_end;
   s.pri      = pri;

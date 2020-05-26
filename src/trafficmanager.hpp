@@ -139,7 +139,7 @@ protected:
 
   // ============ Statistics ============
 
-  vector<Stats *> _plat_stats;     
+  // vector<Stats *> _plat_stats;     
   vector<double> _overall_min_plat;  
   vector<double> _overall_avg_plat;  
   vector<double> _overall_max_plat;  
@@ -207,6 +207,12 @@ protected:
   eSimState _sim_state;
 
   bool _measure_latency;
+
+
+
+  int val;
+  vector<Stats *> _plat_stats; 
+
 
   int   _reset_time;
   int   _drain_time;
@@ -291,12 +297,13 @@ protected:
 
 public:
 
+
   static TrafficManager * New(Configuration const & config, 
-			      vector<Network *> const & net);
+            vector<Network *> const & net);
 
   TrafficManager( const Configuration &config, const vector<Network *> & net );
   virtual ~TrafficManager( );
-
+  
   bool Run( );
 
   virtual void WriteStats( ostream & os = cout ) const ;
